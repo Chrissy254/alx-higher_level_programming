@@ -1,0 +1,202 @@
+import ast
+import astunparse
+
+# Original code with white spaces and excess empty lines
+code_with_spaces_and_empty_lines = """
+# 4-print_square.txt
+
+
+============================
+
+How to Use 4-print_square.py
+
+============================
+
+
+This module defines a square-printing function ``print_square(size)``.
+
+
+Usage
+
+=====
+
+
+Squares are printed using the ``#`` character. The parameter ``size``
+
+represents the height and width of the square.
+
+
+::
+
+
+    >>> print_square = __import__('4-print_square').print_square
+
+    >>> print_square(1)
+
+    #
+
+
+::
+
+
+    >>> print_square(4)
+
+    ####
+
+    ####
+
+    ####
+
+    ####
+
+
+::
+
+
+    >>> print_square(10)
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+    ##########
+
+
+If ``size`` is zero, the function prints nothing.
+
+
+::
+
+
+    >>> print_square(0)
+
+
+Invalid Sizes
+
+=============
+
+
+The parameter ``size`` must be an integer. Otherwise, a TypeError is raised.
+
+
+::
+
+
+    >>> print_square("not an int")
+
+    Traceback (most recent call last):
+
+    TypeError: size must be an integer
+
+
+::
+
+
+    >>> print_square(5.5)
+
+    Traceback (most recent call last):
+
+    TypeError: size must be an integer
+
+
+::
+
+
+    >>> print_square(None)
+
+    Traceback (most recent call last):
+
+    TypeError: size must be an integer
+
+
+If ``size`` is less than zero, a ValueError is raised.
+
+
+::
+
+
+    >>> print_square(-7)
+
+    Traceback (most recent call last):
+
+    ValueError: size must be >= 0
+
+
+Note that type-checking occurs before value-checking.
+
+
+::
+
+
+    >>> print_square(-7.5)
+
+    Traceback (most recent call last):
+
+    TypeError: size must be an integer
+
+
+At least one argument must be provided.
+
+
+::
+
+
+    >>> print_square()
+
+    Traceback (most recent call last):
+
+    TypeError: print_square() missing 1 required positional argument: 'size'
+
+"""
+
+# Parse the code into an Abstract Syntax Tree (AST)
+parsed_code = ast.parse(code_with_spaces_and_empty_lines)
+
+
+# Define a visitor class to remove white spaces and excess empty lines
+class CodeCleaner(ast.NodeTransformer):
+    def visit_FunctionDef(self, node):
+        # Remove white spaces and excess empty lines within functions
+        if node.body:
+            new_body = []
+            for stmt in node.body:
+                if not isinstance(stmt, (ast.FunctionDef, ast.ClassDef)):
+                    # Preserve non-function and non-class statements
+                    if isinstance(stmt, ast.Expr):
+                        # Remove multiple empty lines within expressions
+                        new_body.append(ast.Expr(ast.Str("")))
+                    else:
+                        new_body.append(stmt)
+            node.body = new_body
+        return node
+
+    def visit(self, node):
+        if not isinstance(node, ast.FunctionDef):
+            # Remove spaces from other parts of the code
+            ast.fix_missing_locations(node)
+            return node
+        return self.generic_visit(node)
+
+
+# Apply the visitor to remove white spaces and excess empty lines
+cleaned_code = CodeCleaner().visit(parsed_code)
+
+# Convert the modified AST back to code
+code_without_spaces_and_empty_lines = astunparse.unparse(cleaned_code)
+
+# Print the code without white spaces and excess empty lines
+print(code_without_spaces_and_empty_lines)
